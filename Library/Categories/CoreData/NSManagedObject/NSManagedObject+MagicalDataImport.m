@@ -159,7 +159,22 @@ NSString * const kMagicalRecordImportAttributeUseDefaultValueWhenNotPresent = @"
     if ([self MR_importValue:relationshipData forKey:relationshipName]) return; //If custom import was used
 
     NSString *lookupKey = [[relationshipInfo userInfo] objectForKey:kMagicalRecordImportRelationshipMapKey] ?: relationshipName;
-    id relatedObjectData = [relationshipData valueForKeyPath:lookupKey];
+    
+    id relatedObjectData = nil;
+    
+    @try 
+    {
+    	relatedObjectData = [relationshipData valueForKeyPath:lookupKey];
+    }
+    @catch (NSException *exception)
+    {
+    	 MRLogWarn(@"Looking up a key for relationship failed while importing: %@\n", relationshipInfo);
+    	 MRLogWarn(@"lookupKey: %@", lookupKey);
+    	 MRLogWarn(@"relationshipInfo.destinationEntity %@", relationshipInfo.destinationEntity);
+    	 MRLogWarn(@"relationshipData: %@", relationshipData);
+    	 MRLogWarn(@"Exception:\n%@: %@", exception.name, exception.reason);
+    }
+    
     if (relatedObjectData == nil)
     {
         lookupKey = [relationshipData MR_lookupKeyForProperty:relationshipInfo];
